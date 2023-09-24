@@ -67,7 +67,9 @@ public class ShenyuConfiguration {
      */
     @Bean("webHandler")
     public ShenyuWebHandler shenyuWebHandler(final ObjectProvider<List<ShenyuPlugin>> plugins) {
+        // 获取到注入到容器里的所有插件
         List<ShenyuPlugin> pluginList = plugins.getIfAvailable(Collections::emptyList);
+        // 给插件排序，TODO 那么这里的顺序就是插件代码里写死的了，和数据库里的配置没有关系了，那么就不能动态控制顺序了吗
         List<ShenyuPlugin> shenyuPlugins = pluginList.stream()
                 .sorted(Comparator.comparingInt(ShenyuPlugin::getOrder)).collect(Collectors.toList());
         shenyuPlugins.forEach(shenyuPlugin -> log.info("load plugin:[{}] [{}]", shenyuPlugin.named(), shenyuPlugin.getClass().getName()));

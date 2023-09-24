@@ -63,6 +63,7 @@ public class AlibabaDubboProxyService {
             ApplicationConfigCache.getInstance().invalidate(metaData.getPath());
             reference = ApplicationConfigCache.getInstance().initRef(metaData);
         }
+        // 获取泛化调用的代理对象
         GenericService genericService = reference.get();
         try {
             Pair<String[], Object[]> pair;

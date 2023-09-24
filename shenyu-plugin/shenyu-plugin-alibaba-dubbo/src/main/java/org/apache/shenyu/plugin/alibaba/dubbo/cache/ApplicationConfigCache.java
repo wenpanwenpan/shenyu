@@ -132,7 +132,8 @@ public final class ApplicationConfigCache {
                 return referenceConfig;
             }
         } catch (ExecutionException e) {
-            log.error("init dubbo ref ex:{}", e.getMessage());
+            // 把异常打印处理看看是什么鬼
+            log.error("init dubbo ref ex:{}", e.getMessage(), e);
         }
         return build(metaData);
 

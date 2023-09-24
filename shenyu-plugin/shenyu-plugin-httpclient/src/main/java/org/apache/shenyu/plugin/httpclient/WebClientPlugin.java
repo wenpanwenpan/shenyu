@@ -65,15 +65,20 @@ public class WebClientPlugin implements ShenyuPlugin {
     public Mono<Void> execute(final ServerWebExchange exchange, final ShenyuPluginChain chain) {
         final ShenyuContext shenyuContext = exchange.getAttribute(Constants.CONTEXT);
         assert shenyuContext != null;
+        // 获取要请求的地址
         String urlPath = exchange.getAttribute(Constants.HTTP_URL);
         if (StringUtils.isEmpty(urlPath)) {
+            // 直接返回错误，不在执行下一个插件了
             Object error = ShenyuResultWrap.error(ShenyuResultEnum.CANNOT_FIND_URL.getCode(), ShenyuResultEnum.CANNOT_FIND_URL.getMsg(), null);
             return WebFluxResultUtils.result(exchange, error);
         }
+        // 调用超时时间
         long timeout = (long) Optional.ofNullable(exchange.getAttribute(Constants.HTTP_TIME_OUT)).orElse(3000L);
+        // 失败重试次数
         int retryTimes = (int) Optional.ofNullable(exchange.getAttribute(Constants.HTTP_RETRY)).orElse(0);
         log.info("The request urlPath is {}, retryTimes is {}", urlPath, retryTimes);
         HttpMethod method = HttpMethod.valueOf(exchange.getRequest().getMethodValue());
+        // 发起请求
         WebClient.RequestBodySpec requestBodySpec = webClient.method(method).uri(urlPath);
         return handleRequestBody(requestBodySpec, exchange, timeout, retryTimes, chain);
     }
@@ -102,13 +107,16 @@ public class WebClientPlugin implements ShenyuPlugin {
                                          final int retryTimes,
                                          final ShenyuPluginChain chain) {
         return requestBodySpec.headers(httpHeaders -> {
+            // 请求头里的信息添加到响应头里
             httpHeaders.addAll(exchange.getRequest().getHeaders());
             httpHeaders.remove(HttpHeaders.HOST);
         })
                 .body(BodyInserters.fromDataBuffers(exchange.getRequest().getBody()))
                 .exchange()
+                // 请求失败处理
                 .doOnError(e -> log.error(e.getMessage(), e))
                 .timeout(Duration.ofMillis(timeout))
+                // 连接超时则重试
                 .retryWhen(Retry.onlyIf(x -> x.exception() instanceof ConnectTimeoutException)
                     .retryMax(retryTimes)
                     .backoff(Backoff.exponential(Duration.ofMillis(200), Duration.ofSeconds(20), 2, true)))
@@ -123,6 +131,7 @@ public class WebClientPlugin implements ShenyuPlugin {
             exchange.getAttributes().put(Constants.CLIENT_RESPONSE_RESULT_TYPE, ResultEnum.ERROR.getName());
         }
         exchange.getAttributes().put(Constants.CLIENT_RESPONSE_ATTR, res);
+        // 执行下一个插件
         return chain.execute(exchange);
     }
 }

@@ -69,8 +69,11 @@ public class ZookeeperSyncDataService implements SyncDataService, AutoCloseable 
         this.pluginDataSubscriber = pluginDataSubscriber;
         this.metaDataSubscribers = metaDataSubscribers;
         this.authDataSubscribers = authDataSubscribers;
+        // watch插件数据
         watcherData();
+        // watch认证数据
         watchAppAuth();
+        // watch元数据
         watchMetaData();
     }
 
@@ -90,8 +93,11 @@ public class ZookeeperSyncDataService implements SyncDataService, AutoCloseable 
     }
 
     private void watcherAll(final String pluginName) {
+        // watch插件
         watcherPlugin(pluginName);
+        // watch selector
         watcherSelector(pluginName);
+        // watch rule
         watcherRule(pluginName);
     }
 

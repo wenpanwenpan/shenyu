@@ -17,6 +17,7 @@
 
 package org.apache.shenyu.examples.http.controller;
 
+import lombok.extern.slf4j.Slf4j;
 import org.apache.shenyu.client.springmvc.annotation.ShenyuSpringMvcClient;
 import org.apache.shenyu.examples.http.dto.OAuth2DTO;
 import org.apache.shenyu.examples.http.dto.OrderDTO;
@@ -30,6 +31,7 @@ import java.util.Objects;
 /**
  * TestController.
  */
+@Slf4j
 @RestController
 @RequestMapping("/order")
 @ShenyuSpringMvcClient(path = "/order")
@@ -57,6 +59,7 @@ public class OrderController {
     @GetMapping("/findById")
     @ShenyuSpringMvcClient(path = "/findById", desc = "Find by id")
     public OrderDTO findById(@RequestParam("id") final String id) {
+        log.info("接收到findById的请求，id is {}",id);
         OrderDTO orderDTO = new OrderDTO();
         orderDTO.setId(id);
         orderDTO.setName("hello world findById");

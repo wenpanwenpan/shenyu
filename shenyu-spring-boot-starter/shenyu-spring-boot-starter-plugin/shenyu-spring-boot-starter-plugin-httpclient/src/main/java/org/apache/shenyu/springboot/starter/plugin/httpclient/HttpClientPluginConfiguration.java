@@ -139,6 +139,7 @@ public class HttpClientPluginConfiguration {
 
     /**
      * The type Web client configuration.
+     * 只要引用了这个包，那么这个插件默认就会被注入到容器，这个插件是用于处理web请求的
      */
     @Configuration
     @ConditionalOnProperty(name = "shenyu.httpclient.strategy", havingValue = "webClient", matchIfMissing = true)
@@ -152,6 +153,7 @@ public class HttpClientPluginConfiguration {
          */
         @Bean
         public ShenyuPlugin webClientPlugin(final ObjectProvider<HttpClient> httpClient) {
+            // 可以看到这里把httpClient传递给webClient了，后续会通过这个httpClient转发http请求
             WebClient webClient = WebClient.builder()
                     .clientConnector(new ReactorClientHttpConnector(Objects.requireNonNull(httpClient.getIfAvailable())))
                     .build();

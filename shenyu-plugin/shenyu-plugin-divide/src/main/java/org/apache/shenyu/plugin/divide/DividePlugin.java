@@ -55,30 +55,37 @@ public class DividePlugin extends AbstractShenyuPlugin {
     protected Mono<Void> doExecute(final ServerWebExchange exchange, final ShenyuPluginChain chain, final SelectorData selector, final RuleData rule) {
         ShenyuContext shenyuContext = exchange.getAttribute(Constants.CONTEXT);
         assert shenyuContext != null;
+        // 获取请求的一些规则配置
         DivideRuleHandle ruleHandle = UpstreamCacheManager.getInstance().obtainHandle(CacheKeyUtils.INST.getKey(rule));
         long headerSize = 0;
+        // 累加请求头的数据大小
         for (List<String> multiHeader : exchange.getRequest().getHeaders().values()) {
             for (String value : multiHeader) {
                 headerSize += value.getBytes(StandardCharsets.UTF_8).length;
             }
         }
+        // 请求头大小超过阈值
         if (headerSize > ruleHandle.getHeaderMaxSize()) {
             log.error("request header is too large");
             Object error = ShenyuResultWrap.error(ShenyuResultEnum.REQUEST_HEADER_TOO_LARGE.getCode(), ShenyuResultEnum.REQUEST_HEADER_TOO_LARGE.getMsg(), null);
             return WebFluxResultUtils.result(exchange, error);
         }
+        // 请求数据超过大小
         if (exchange.getRequest().getHeaders().getContentLength() > ruleHandle.getRequestMaxSize()) {
             log.error("request entity is too large");
             Object error = ShenyuResultWrap.error(ShenyuResultEnum.REQUEST_ENTITY_TOO_LARGE.getCode(), ShenyuResultEnum.REQUEST_ENTITY_TOO_LARGE.getMsg(), null);
             return WebFluxResultUtils.result(exchange, error);
         }
         List<DivideUpstream> upstreamList = UpstreamCacheManager.getInstance().findUpstreamListBySelectorId(selector.getId());
+        // 没有目标服务可用
         if (CollectionUtils.isEmpty(upstreamList)) {
             log.error("divide upstream configuration error： {}", rule);
             Object error = ShenyuResultWrap.error(ShenyuResultEnum.CANNOT_FIND_URL.getCode(), ShenyuResultEnum.CANNOT_FIND_URL.getMsg(), null);
             return WebFluxResultUtils.result(exchange, error);
         }
+        // 获取请求的ip
         String ip = Objects.requireNonNull(exchange.getRequest().getRemoteAddress()).getAddress().getHostAddress();
+        // 通过负载均衡算法选取一个
         DivideUpstream divideUpstream = LoadBalanceUtils.selector(upstreamList, ruleHandle.getLoadBalance(), ip);
         if (Objects.isNull(divideUpstream)) {
             log.error("divide has no upstream");
@@ -87,11 +94,13 @@ public class DividePlugin extends AbstractShenyuPlugin {
         }
         // set the http url
         String domain = buildDomain(divideUpstream);
+        // 什么含义？
         String realURL = buildRealURL(domain, shenyuContext, exchange);
         exchange.getAttributes().put(Constants.HTTP_URL, realURL);
         // set the http timeout
         exchange.getAttributes().put(Constants.HTTP_TIME_OUT, ruleHandle.getTimeout());
         exchange.getAttributes().put(Constants.HTTP_RETRY, ruleHandle.getRetry());
+        // 执行下一个plugin
         return chain.execute(exchange);
     }
 

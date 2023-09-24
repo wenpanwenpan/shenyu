@@ -37,7 +37,9 @@ public class LoadBalanceUtils {
      * @return the divide upstream
      */
     public static DivideUpstream selector(final List<DivideUpstream> upstreamList, final String algorithm, final String ip) {
+        // 获取负载均衡算法
         LoadBalance loadBalance = ExtensionLoader.getExtensionLoader(LoadBalance.class).getJoin(algorithm);
+        // 根据负载均衡算法选取一个
         return loadBalance.select(upstreamList, ip);
     }
 }

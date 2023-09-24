@@ -78,6 +78,7 @@ public class ApacheDubboProxyService {
             ApplicationConfigCache.getInstance().invalidate(metaData.getPath());
             reference = ApplicationConfigCache.getInstance().initRef(metaData);
         }
+        // 获取泛化调用的代理对象
         GenericService genericService = reference.get();
         Pair<String[], Object[]> pair;
         if (StringUtils.isBlank(metaData.getParameterTypes()) || ParamCheckUtils.dubboBodyIsEmpty(body)) {
@@ -87,6 +88,7 @@ public class ApacheDubboProxyService {
         }
         //Compatible with asynchronous calls of lower Dubbo versions
         RpcContext.getContext().setAttachment(ASYNC_KEY, Boolean.TRUE.toString());
+        // 泛化调用
         Object data = genericService.$invoke(metaData.getMethodName(), pair.getLeft(), pair.getRight());
         if (Objects.isNull(data)) {
             data = RpcContext.getContext().getFuture();

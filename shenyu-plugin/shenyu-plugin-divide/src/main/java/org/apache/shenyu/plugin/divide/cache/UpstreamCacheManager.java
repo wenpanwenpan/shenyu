@@ -43,6 +43,7 @@ public final class UpstreamCacheManager extends RuleHandleCache<String, DivideRu
 
     private static final Map<String, List<DivideUpstream>> UPSTREAM_MAP = Maps.newConcurrentMap();
 
+    /**key：selectorId*/
     private static final Map<String, List<DivideUpstream>> UPSTREAM_MAP_TEMP = Maps.newConcurrentMap();
 
     /**

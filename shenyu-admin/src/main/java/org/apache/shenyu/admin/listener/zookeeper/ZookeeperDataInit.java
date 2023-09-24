@@ -45,6 +45,7 @@ public class ZookeeperDataInit implements CommandLineRunner {
 
     @Override
     public void run(final String... args) {
+        // shenyu-admin 启动时就会从数据库查询数据，全量同步数据给gateway
         String pluginPath = DefaultPathConstants.PLUGIN_PARENT;
         String authPath = DefaultPathConstants.APP_AUTH_PARENT;
         String metaDataPath = DefaultPathConstants.META_DATA;
