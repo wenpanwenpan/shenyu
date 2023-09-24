@@ -103,6 +103,7 @@ public final class ShenyuWebHandler implements WebHandler {
                 if (this.index < plugins.size()) {
                     ShenyuPlugin plugin = plugins.get(this.index++);
                     Boolean skip = plugin.skip(exchange);
+                    // 如果当前插件开启了 跳过 选项，则直接执行下一个插件
                     if (skip) {
                         return this.execute(exchange);
                     }

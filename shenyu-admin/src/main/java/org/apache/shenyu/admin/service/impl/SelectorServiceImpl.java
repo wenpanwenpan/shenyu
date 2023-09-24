@@ -96,6 +96,8 @@ public class SelectorServiceImpl implements SelectorService {
     public String register(final SelectorDTO selectorDTO) {
         SelectorDO selectorDO = SelectorDO.buildSelectorDO(selectorDTO);
         List<SelectorConditionDTO> selectorConditionDTOs = selectorDTO.getSelectorConditions();
+        // selector和conditions落库
+        // todo 如果是更新了selector的condition 这里不负责把condition落库吗？
         if (StringUtils.isEmpty(selectorDTO.getId())) {
             selectorMapper.insertSelective(selectorDO);
             selectorConditionDTOs.forEach(selectorConditionDTO -> {
@@ -103,6 +105,7 @@ public class SelectorServiceImpl implements SelectorService {
                 selectorConditionMapper.insertSelective(SelectorConditionDO.buildSelectorConditionDO(selectorConditionDTO));
             });
         }
+        // 发布selector更新事件
         publishEvent(selectorDO, selectorConditionDTOs);
         return selectorDO.getId();
     }
@@ -264,17 +267,21 @@ public class SelectorServiceImpl implements SelectorService {
         if (StringUtils.isEmpty(contextPath)) {
             contextPath = buildContextPath(dto.getPath());
         }
+        // 通过contextPath查询selector
         SelectorDO selectorDO = selectorMapper.selectByName(contextPath);
         String selectorId;
         String uri = String.join(":", dto.getHost(), String.valueOf(dto.getPort()));
+        // selector不存在，则构建selector和condition并落库和发布selector变更事件（同步给gateway）
         if (Objects.isNull(selectorDO)) {
             selectorId = registerPluginSelector(contextPath, uri, rpcType);
         } else {
+            // selector已存在
             selectorId = selectorDO.getId();
             //update upstream
             String handle = selectorDO.getHandle();
             String handleAdd;
             DivideUpstream addDivideUpstream = buildDivideUpstream(uri);
+            // 重新构建selector数据
             final SelectorData selectorData = buildByName(contextPath);
             // fetch UPSTREAM_MAP data from db
             upstreamCheckService.fetchUpstreamData();
@@ -292,11 +299,11 @@ public class SelectorServiceImpl implements SelectorService {
             }
             selectorDO.setHandle(handleAdd);
             selectorData.setHandle(handleAdd);
-            // update db
+            // update db 这里好像就没有condition的更新了？
             selectorMapper.updateSelective(selectorDO);
             // submit upstreamCheck
             upstreamCheckService.submit(contextPath, addDivideUpstream);
-            // publish change event.
+            // publish change event. 发布selector变更事件
             eventPublisher.publishEvent(new DataChangedEvent(ConfigGroupEnum.SELECTOR, DataEventTypeEnum.UPDATE,
                     Collections.singletonList(selectorData)));
         }
@@ -304,7 +311,9 @@ public class SelectorServiceImpl implements SelectorService {
     }
 
     private void publishEvent(final SelectorDO selectorDO, final List<SelectorConditionDTO> selectorConditionDTOs) {
+        // 查询插件
         PluginDO pluginDO = pluginMapper.selectById(selectorDO.getPluginId());
+        // 将selector的condition转为 condition
         List<ConditionData> conditionDataList =
                 selectorConditionDTOs.stream().map(ConditionTransfer.INSTANCE::mapToSelectorDTO).collect(Collectors.toList());
         // publish change event.
@@ -336,18 +345,24 @@ public class SelectorServiceImpl implements SelectorService {
     }
 
     private String registerPluginSelector(final String contextPath, final String uri, final String rpcType) {
+        // 构建selector
         SelectorDTO selectorDTO = registerSelector(contextPath, pluginMapper.selectByName(rpcType).getId());
         //is divide
         DivideUpstream divideUpstream = buildDivideUpstream(uri);
         String handler = GsonUtils.getInstance().toJson(Collections.singletonList(divideUpstream));
         selectorDTO.setHandle(handler);
+        // TODO 暂时先不看
         upstreamCheckService.submit(selectorDTO.getName(), divideUpstream);
+        // selector落库和发布selector变更事件
         return register(selectorDTO);
     }
 
     private SelectorDTO registerSelector(final String contextPath, final String pluginId) {
+        // 构建一个selector对象
         SelectorDTO selectorDTO = buildDefaultSelectorDTO(contextPath);
+        // 设置该selector对应的plugin的ID
         selectorDTO.setPluginId(pluginId);
+        // 设置这个selector的条件
         selectorDTO.setSelectorConditions(buildDefaultSelectorConditionDTO(contextPath));
         return selectorDTO;
     }
@@ -364,11 +379,13 @@ public class SelectorServiceImpl implements SelectorService {
                 .build();
     }
 
+    /**构建selector默认的condition*/
     private List<SelectorConditionDTO> buildDefaultSelectorConditionDTO(final String contextPath) {
         SelectorConditionDTO selectorConditionDTO = new SelectorConditionDTO();
         selectorConditionDTO.setParamType(ParamTypeEnum.URI.getName());
         selectorConditionDTO.setParamName("/");
         selectorConditionDTO.setOperator(OperatorEnum.MATCH.getAlias());
+        // 默认该selector拦截 /contextPath/** 请求
         selectorConditionDTO.setParamValue(contextPath + "/**");
         return Collections.singletonList(selectorConditionDTO);
     }

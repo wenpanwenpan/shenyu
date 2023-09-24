@@ -31,6 +31,7 @@ import java.util.Map;
 
 /**
  * The type Register center configuration.
+ * 这个类的主要作用就是根据配置加载client向shenyu-admin注册数据的 ShenyuServerRegisterRepository
  */
 @Slf4j
 @Configuration
@@ -38,7 +39,7 @@ public class RegisterCenterConfiguration {
     
     /**
      * Shenyu register center config shenyu register center config.
-     *
+     * 详情看shenyu-admin的application.yml配置
      * @return the shenyu register center config
      */
     @Bean
@@ -57,8 +58,11 @@ public class RegisterCenterConfiguration {
     @Bean
     public ShenyuServerRegisterRepository shenyuServerRegisterRepository(final ShenyuRegisterCenterConfig shenyuRegisterCenterConfig,
                                                                          final Map<String, ShenyuClientRegisterServiceFactory> shenyuClientRegisterService) {
+        // 获取到注册类型
         String registerType = shenyuRegisterCenterConfig.getRegisterType();
+        // 根据SPI加载server端的RegisterRepository
         ShenyuServerRegisterRepository registerRepository = ExtensionLoader.getExtensionLoader(ShenyuServerRegisterRepository.class).getJoin(registerType);
+        // 获取单例的publisher
         RegisterServerDisruptorPublisher publisher = RegisterServerDisruptorPublisher.getInstance();
         publisher.start(shenyuClientRegisterService);
         registerRepository.init(publisher, shenyuRegisterCenterConfig);

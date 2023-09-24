@@ -73,13 +73,18 @@ public abstract class AbstractShenyuClientRegisterServiceImpl implements ShenyuC
     }
 
     protected SelectorDTO registerSelector(final String contextPath, final String pluginId) {
+        // 构建默认的selector
         SelectorDTO selectorDTO = buildDefaultSelectorDTO(contextPath);
+        // 设置该selector所属的plugin
         selectorDTO.setPluginId(pluginId);
+        // 构建该selector默认的condition信息
         selectorDTO.setSelectorConditions(buildDefaultSelectorConditionDTO(contextPath));
         return selectorDTO;
     }
 
+    /**构建规则DTO*/
     protected RuleDTO registerRule(final String selectorId, final String path, final String pluginName, final String ruleName) {
+        // TODO 什么作用？
         RuleHandle ruleHandle = pluginName.equals(PluginEnum.CONTEXT_PATH.getName())
                 ? RuleHandleFactory.ruleHandle(pluginName, buildContextPath(path)) : RuleHandleFactory.ruleHandle(pluginName, path);
         RuleDTO ruleDTO = RuleDTO.builder()
@@ -91,14 +96,18 @@ public abstract class AbstractShenyuClientRegisterServiceImpl implements ShenyuC
                 .sort(1)
                 .handle(ruleHandle.toJson())
                 .build();
+        // rule的condition，默认是URI匹配
         RuleConditionDTO ruleConditionDTO = RuleConditionDTO.builder()
                 .paramType(ParamTypeEnum.URI.getName())
                 .paramName("/")
+                // eg: /http/order/path/** 或 /http/order/findById
                 .paramValue(path)
                 .build();
+        // 如果path里包含了 * 则表示需要match匹配
         if (path.indexOf("*") > 1) {
             ruleConditionDTO.setOperator(OperatorEnum.MATCH.getAlias());
         } else {
+            // 否则用等于区匹配
             ruleConditionDTO.setOperator(OperatorEnum.EQ.getAlias());
         }
         ruleDTO.setRuleConditions(Collections.singletonList(ruleConditionDTO));
@@ -107,29 +116,40 @@ public abstract class AbstractShenyuClientRegisterServiceImpl implements ShenyuC
 
     protected List<SelectorConditionDTO> buildDefaultSelectorConditionDTO(final String contextPath) {
         SelectorConditionDTO selectorConditionDTO = new SelectorConditionDTO();
+        // 默认是使用URI匹配
         selectorConditionDTO.setParamType(ParamTypeEnum.URI.getName());
         selectorConditionDTO.setParamName("/");
+        // 默认使用match
         selectorConditionDTO.setOperator(OperatorEnum.MATCH.getAlias());
+        // 默认对 contextPath下的所有请求有效
         selectorConditionDTO.setParamValue(contextPath + "/**");
         return Collections.singletonList(selectorConditionDTO);
     }
 
     protected String buildContextPath(final String path) {
         String split = "/";
+        // 通过 / 拆分 path
         String[] splitList = StringUtils.split(path, split);
+        // 取path的第一个作为 contextPath
         if (splitList.length != 0) {
             return split.concat(splitList[0]);
         }
         return split;
     }
 
+    /**构建默认的selector*/
     protected SelectorDTO buildDefaultSelectorDTO(final String name) {
         return SelectorDTO.builder()
                 .name(name)
+                // 默认是使用custom类型
                 .type(SelectorTypeEnum.CUSTOM_FLOW.getCode())
+                // 使用and匹配
                 .matchMode(MatchModeEnum.AND.getCode())
+                // 开启该selector
                 .enabled(Boolean.TRUE)
+                // 默认打印该selector的匹配日志
                 .loged(Boolean.TRUE)
+                // 默认经过该selector匹配后继续向下一个plugin传递
                 .continued(Boolean.TRUE)
                 .sort(1)
                 .build();

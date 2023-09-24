@@ -64,6 +64,7 @@ public class DataChangedEventDispatcher implements ApplicationListener<DataChang
                     listener.onSelectorChanged((List<SelectorData>) event.getSource(), event.getEventType());
                     break;
                 case META_DATA:
+                    // 元数据变更了，则推送给配置中心或通过websocket直接推送给网关（由shenyu-admin的application.yml配置决定）
                     listener.onMetaDataChanged((List<MetaData>) event.getSource(), event.getEventType());
                     break;
                 default:
@@ -74,6 +75,8 @@ public class DataChangedEventDispatcher implements ApplicationListener<DataChang
 
     @Override
     public void afterPropertiesSet() {
+        // 获取容器中所有的 DataChangedListener ，这里 DataChangedListener 实现虽然有多个，但不是都会注册，
+        // 而是根据shenyu-admin里配置的同步策略来注册不同的 DataChangedListener ，@see DataSyncConfiguration 和 application.yml
         Collection<DataChangedListener> listenerBeans = applicationContext.getBeansOfType(DataChangedListener.class).values();
         this.listeners = Collections.unmodifiableList(new ArrayList<>(listenerBeans));
     }

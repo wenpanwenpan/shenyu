@@ -66,8 +66,10 @@ public class WebsocketDataChangedListener implements DataChangedListener {
 
     @Override
     public void onMetaDataChanged(final List<MetaData> metaDataList, final DataEventTypeEnum eventType) {
+        // 将元数据构建成websocket数据
         WebsocketData<MetaData> configData =
                 new WebsocketData<>(ConfigGroupEnum.META_DATA.name(), eventType.name(), metaDataList);
+        // 发给每个建立了websocket连接的client
         WebsocketCollector.send(GsonUtils.getInstance().toJson(configData), eventType);
     }
 }

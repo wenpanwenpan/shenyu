@@ -28,6 +28,7 @@ public class URIParameterData implements ParameterData {
     
     @Override
     public String builder(final String paramName, final ServerWebExchange exchange) {
+        // 从exchange里取出uri
         return exchange.getRequest().getURI().getPath();
     }
 }

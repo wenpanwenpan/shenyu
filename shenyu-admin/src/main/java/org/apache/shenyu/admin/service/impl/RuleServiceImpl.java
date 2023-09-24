@@ -78,11 +78,15 @@ public class RuleServiceImpl implements RuleService {
 
     @Override
     public String register(final RuleDTO ruleDTO, final String name, final boolean metaDataIsNull) {
+        // 规则存在则啥也不做
         if (Objects.nonNull(ruleMapper.findByName(name)) || metaDataIsNull) {
             return "";
         }
+        // DTO转为do
         RuleDO ruleDO = RuleDO.buildRuleDO(ruleDTO);
+        // 获取规则的条件
         List<RuleConditionDTO> ruleConditions = ruleDTO.getRuleConditions();
+        // 如果规则没有存在过，则插入规则和condition
         if (StringUtils.isEmpty(ruleDTO.getId())) {
             ruleMapper.insertSelective(ruleDO);
             ruleConditions.forEach(ruleConditionDTO -> {
@@ -90,6 +94,7 @@ public class RuleServiceImpl implements RuleService {
                 ruleConditionMapper.insertSelective(RuleConditionDO.buildRuleConditionDO(ruleConditionDTO));
             });
         }
+        // 发布规则变更事件
         publishEvent(ruleDO, ruleConditions);
         return ruleDO.getId();
     }
@@ -216,7 +221,7 @@ public class RuleServiceImpl implements RuleService {
 
         List<ConditionData> conditionDataList =
                 ruleConditions.stream().map(ConditionTransfer.INSTANCE::mapToRuleDTO).collect(Collectors.toList());
-        // publish change event.
+        // publish change event. 发布规则变更事件
         eventPublisher.publishEvent(new DataChangedEvent(ConfigGroupEnum.RULE, DataEventTypeEnum.UPDATE,
                 Collections.singletonList(RuleDO.transFrom(ruleDO, pluginDO.getName(), conditionDataList))));
     }

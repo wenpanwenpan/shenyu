@@ -35,7 +35,10 @@ public class ShenyuHttpRegistryControllerBeanPostProcessor implements BeanPostPr
     @SneakyThrows
     @Override
     public Object postProcessAfterInitialization(final Object bean, final String beanName) throws BeansException {
+        // 可以看到ShenyuHttpRegistryController并不会被直接注入容器
+        // @see org.apache.shenyu.admin.config.RegisterCenterConfiguration.shenyuServerRegisterRepository
         if (bean instanceof ShenyuHttpRegistryController) {
+            // 将 ShenyuHttpRegistryController 里的handler添加给springmvc管理
             RequestMappingHandlerMapping requestMappingHandlerMapping = SpringBeanUtils.getInstance().getBean(RequestMappingHandlerMapping.class);
             Method method = requestMappingHandlerMapping.getClass().getSuperclass().getSuperclass().getDeclaredMethod("detectHandlerMethods", Object.class);
             method.setAccessible(true);

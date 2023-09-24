@@ -52,6 +52,7 @@ public class HttpClientRegisterRepository implements ShenyuClientRegisterReposit
     }
 
     protected void initTurn() {
+        // 这里就是client使用HTTP方式上报自己的信息时所要请求的admin的地址
         turn.put(RegisterTypeEnum.DUBBO.getName(), "/shenyu-client/dubbo-register");
         turn.put(RegisterTypeEnum.GRPC.getName(), "/shenyu-client/grpc-register");
         turn.put(RegisterTypeEnum.HTTP.getName(), "/shenyu-client/springmvc-register");

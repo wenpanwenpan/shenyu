@@ -32,6 +32,7 @@ public class ParameterDataFactory {
      * @return the parameter data
      */
     public static ParameterData newInstance(final String paramType) {
+        // 使用SPI + paramType 去获取具体的参数数据
         return ExtensionLoader.getExtensionLoader(ParameterData.class).getJoin(paramType);
     }
     

@@ -30,6 +30,7 @@ public class EqualsPredicateJudge implements PredicateJudge {
 
     @Override
     public Boolean judge(final ConditionData conditionData, final String realData) {
+        // 等于判断条件，直接调用equals即可
         return Objects.equals(realData, conditionData.getParamValue().trim());
     }
 }

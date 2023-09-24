@@ -61,8 +61,9 @@ public class ZookeeperDataChangedListener implements DataChangedListener {
     @Override
     public void onMetaDataChanged(final List<MetaData> changed, final DataEventTypeEnum eventType) {
         for (MetaData data : changed) {
+            // eg: /shenyu/metadata/xxxPath 这里保证了元数据都会被挂在 /shenyu/metadata这个目录下
             String metaDataPath = DefaultPathConstants.buildMetaDataPath(URLEncoder.encode(data.getPath(), "UTF-8"));
-            // delete
+            // delete 删除事件，则直接删除zk里的这个path，会被gateway监听到
             if (eventType == DataEventTypeEnum.DELETE) {
                 deleteZkPath(metaDataPath);
                 continue;

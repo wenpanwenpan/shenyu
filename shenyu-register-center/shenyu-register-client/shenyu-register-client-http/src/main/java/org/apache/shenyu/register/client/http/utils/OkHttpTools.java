@@ -73,6 +73,7 @@ public final class OkHttpTools {
                 .url(url)
                 .post(body)
                 .build();
+        // 执行调用并将响应结果转为字符串
         return client.newCall(request).execute().body().string();
     }
 }

@@ -38,6 +38,7 @@ public class ShenyuClientCommonBeanConfiguration {
      */
     @Bean
     public ShenyuClientRegisterRepository shenyuClientRegisterRepository(final ShenyuRegisterCenterConfig config) {
+        // spi 加载
         return ShenyuClientRegisterRepositoryFactory.newInstance(config);
     }
     

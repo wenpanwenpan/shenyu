@@ -67,7 +67,9 @@ public class ZookeeperServerRegisterRepository implements ShenyuServerRegisterRe
     }
     
     private void initSubscribe() {
+        // 订阅元数据上报
         RpcTypeEnum.acquireSupportMetadatas().forEach(rpcTypeEnum -> subscribeMetaData(rpcTypeEnum.getName()));
+        // 订阅URI上报
         RpcTypeEnum.acquireSupportURIs().forEach(rpcTypeEnum -> subscribeURI(rpcTypeEnum.getName()));
     }
     

@@ -42,6 +42,7 @@ public class DubboTestServiceImpl implements DubboTestService {
     @Override
     @ShenyuDubboClient(path = "/findAll", desc = "Get all data")
     public DubboTest findAll() {
+        System.out.println("接收到findAll请求");
         DubboTest dubboTest = new DubboTest();
         dubboTest.setName("hello world shenyu Alibaba Dubbo , findAll");
         dubboTest.setId(String.valueOf(new Random().nextInt()));

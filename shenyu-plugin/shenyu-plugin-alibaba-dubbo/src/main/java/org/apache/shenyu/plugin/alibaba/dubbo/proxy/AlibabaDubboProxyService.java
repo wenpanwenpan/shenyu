@@ -71,6 +71,7 @@ public class AlibabaDubboProxyService {
             } else {
                 pair = bodyParamResolveService.buildParameter(body, metaData.getParameterTypes());
             }
+            // RPC泛化调用
             return genericService.$invoke(metaData.getMethodName(), pair.getLeft(), pair.getRight());
         } catch (GenericException e) {
             log.error("dubbo invoker have exception", e);

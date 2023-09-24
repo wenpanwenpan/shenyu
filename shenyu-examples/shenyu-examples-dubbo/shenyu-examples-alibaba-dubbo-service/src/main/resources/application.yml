@@ -23,10 +23,10 @@ spring:
     allow-bean-definition-overriding: true
 shenyu:
   client:
-    registerType: http #zookeeper #etcd #nacos #consul
-    serverLists: http://localhost:9095 #localhost:2181 #http://localhost:2379 #localhost:8848
+    registerType: zookeeper #http #zookeeper #etcd #nacos #consul
+    serverLists: localhost:2181 #http://localhost:9095 #localhost:2181 #http://localhost:2379 #localhost:8848
     props:
-      contextPath: /dubbo
-      appName: dubbo
+      contextPath: /dubbo-example-contextPath
+      appName: dubbo-example-appName
       nacosNameSpace: ShenyuRegisterCenter
       port: 20888

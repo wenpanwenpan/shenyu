@@ -43,7 +43,7 @@ public final class RegisterUtils {
         if ("success".equals(result)) {
             log.info("{} client register success: {} ", rpcType, json);
         } else {
-            log.error("{} client register error: {} ", rpcType, json);
+            log.error("{} client register requestJson: {}, error: {} ", rpcType, json, result);
         }
     }
 }

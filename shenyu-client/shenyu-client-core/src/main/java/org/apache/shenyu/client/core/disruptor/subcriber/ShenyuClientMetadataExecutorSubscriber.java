@@ -53,6 +53,7 @@ public class ShenyuClientMetadataExecutorSubscriber implements ExecutorTypeSubsc
     public void executor(final Collection<MetaDataRegisterDTO> metaDataRegisterDTOList) {
         for (MetaDataRegisterDTO metaDataRegisterDTO : metaDataRegisterDTOList) {
             while (true) {
+                // 检查一下这个host是通的
                 try (Socket socket = new Socket(metaDataRegisterDTO.getHost(), metaDataRegisterDTO.getPort())) {
                     break;
                 } catch (IOException e) {
@@ -64,6 +65,7 @@ public class ShenyuClientMetadataExecutorSubscriber implements ExecutorTypeSubsc
                 }
             }
             ShenyuClientShutdownHook.delayOtherHooks();
+            // 注册到配置中心，后面shenyu-admin应该会从这里拉取然后落库并推送gateway
             shenyuClientRegisterRepository.persistInterface(metaDataRegisterDTO);
         }
     }

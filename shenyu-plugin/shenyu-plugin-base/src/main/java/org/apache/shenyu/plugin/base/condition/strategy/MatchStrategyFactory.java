@@ -37,6 +37,7 @@ public class MatchStrategyFactory {
      */
     public static MatchStrategy newInstance(final Integer strategy) {
         String matchMode = MatchModeEnum.getMatchModeByCode(strategy);
+        // 通过SPI获取匹配策略
         return ExtensionLoader.getExtensionLoader(MatchStrategy.class).getJoin(matchMode);
     }
     
@@ -49,6 +50,7 @@ public class MatchStrategyFactory {
      * @return the boolean
      */
     public static boolean match(final Integer strategy, final List<ConditionData> conditionDataList, final ServerWebExchange exchange) {
+        // strategy: and 或者 or
         return newInstance(strategy).match(conditionDataList, exchange);
     }
 }

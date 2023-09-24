@@ -70,13 +70,18 @@ public class SyncDataServiceImpl implements SyncDataService {
 
     @Override
     public boolean syncAll(final DataEventTypeEnum type) {
+        // 同步auth数据
         appAuthService.syncData();
+        // 同步插件数据
         List<PluginData> pluginDataList = pluginService.listAll();
         eventPublisher.publishEvent(new DataChangedEvent(ConfigGroupEnum.PLUGIN, type, pluginDataList));
+        // 同步selector数据
         List<SelectorData> selectorDataList = selectorService.listAll();
         eventPublisher.publishEvent(new DataChangedEvent(ConfigGroupEnum.SELECTOR, type, selectorDataList));
+        // 同步规则数据
         List<RuleData> ruleDataList = ruleService.listAll();
         eventPublisher.publishEvent(new DataChangedEvent(ConfigGroupEnum.RULE, type, ruleDataList));
+        // 同步元数据
         metaDataService.syncData();
         return true;
     }

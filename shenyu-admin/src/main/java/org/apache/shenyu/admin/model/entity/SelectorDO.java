@@ -107,6 +107,7 @@ public final class SelectorDO extends BaseDO {
                     .name(item.getName())
                     .build();
             if (StringUtils.isEmpty(item.getId())) {
+                // 生成selector的ID
                 selectorDO.setId(UUIDUtils.getInstance().generateShortUuid());
                 selectorDO.setDateCreated(currentTime);
             } else {

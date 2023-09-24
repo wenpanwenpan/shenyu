@@ -36,6 +36,7 @@ public class PredicateJudgeFactory {
      * @return the predicate judge
      */
     public static PredicateJudge newInstance(final String operator) {
+        // 通过SPI去获取判断条件
         return ExtensionLoader.getExtensionLoader(PredicateJudge.class).getJoin(processSpecialOperator(operator));
     }
     
@@ -47,9 +48,11 @@ public class PredicateJudgeFactory {
      * @return is true pass   is false not pass
      */
     public static Boolean judge(final ConditionData conditionData, final String realData) {
+        // 条件或数据为空则都认为不匹配
         if (Objects.isNull(conditionData) || StringUtils.isBlank(realData)) {
             return false;
         }
+        // 获取判断条件，然后根据判断条件进行判断
         return newInstance(conditionData.getOperator()).judge(conditionData, realData);
     }
 
@@ -60,6 +63,7 @@ public class PredicateJudgeFactory {
      * @return alias
      */
     private static String processSpecialOperator(final String operator) {
+        // 将 = 符号转为equals
         return "=".equals(operator) ? "equals" : operator;
     }
 }

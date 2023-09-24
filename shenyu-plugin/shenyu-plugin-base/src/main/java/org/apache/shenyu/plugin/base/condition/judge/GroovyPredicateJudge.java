@@ -29,6 +29,7 @@ public class GroovyPredicateJudge implements PredicateJudge {
     
     @Override
     public Boolean judge(final ConditionData conditionData, final String realData) {
+        // 这里是执行groovy脚本吗？如果是那每次都加载脚本去执行会有性能问题吗？
         return (Boolean) Eval.me(conditionData.getParamName(), realData, conditionData.getParamValue());
     }
 }

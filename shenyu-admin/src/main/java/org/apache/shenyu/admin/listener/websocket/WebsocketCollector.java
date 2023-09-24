@@ -80,6 +80,7 @@ public class WebsocketCollector {
      */
     @OnMessage
     public void onMessage(final String message, final Session session) {
+        // 应该是用于shenyu-admin前端点击同步按钮时用。此时会从db查询数据然后推送到gateway。TODO 网关会不会主动通过websocket来拉数据呢？
         if (message.equals(DataEventTypeEnum.MYSELF.name())) {
             try {
                 ThreadLocalUtil.put(SESSION_KEY, session);
@@ -116,19 +117,21 @@ public class WebsocketCollector {
     }
 
     /**
-     * Send.
+     * Send. 主要用于shenyu-admin向gateway推送数据
      *
      * @param message the message
      * @param type    the type
      */
     public static void send(final String message, final DataEventTypeEnum type) {
         if (StringUtils.isNotBlank(message)) {
+            // 事件类型为 MYSELF ，先不管他
             if (DataEventTypeEnum.MYSELF == type) {
                 Session session = (Session) ThreadLocalUtil.get(SESSION_KEY);
                 if (session != null) {
                     sendMessageBySession(session, message);
                 }
             } else {
+                // 遍历每个建立连接的client进行消息发送
                 SESSION_SET.forEach(session -> sendMessageBySession(session, message));
             }
         }

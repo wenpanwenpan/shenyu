@@ -127,10 +127,12 @@ public class CommonPluginDataSubscriber implements PluginDataSubscriber {
                 }
             } else if (data instanceof SelectorData) {
                 SelectorData selectorData = (SelectorData) data;
+                // 更新selector
                 if (dataType == DataEventTypeEnum.UPDATE) {
                     BaseDataCache.getInstance().cacheSelectData(selectorData);
                     Optional.ofNullable(handlerMap.get(selectorData.getPluginName())).ifPresent(handler -> handler.handlerSelector(selectorData));
                 } else if (dataType == DataEventTypeEnum.DELETE) {
+                    // 删除selector
                     BaseDataCache.getInstance().removeSelectData(selectorData);
                     Optional.ofNullable(handlerMap.get(selectorData.getPluginName())).ifPresent(handler -> handler.removeSelector(selectorData));
                 }

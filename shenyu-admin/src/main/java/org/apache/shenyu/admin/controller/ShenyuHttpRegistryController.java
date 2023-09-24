@@ -17,12 +17,15 @@
 
 package org.apache.shenyu.admin.controller;
 
+import org.apache.shenyu.admin.config.RegisterCenterConfiguration;
 import org.apache.shenyu.admin.utils.ShenyuResultMessage;
+import org.apache.shenyu.common.utils.JsonUtils;
 import org.apache.shenyu.register.common.config.ShenyuRegisterCenterConfig;
 import org.apache.shenyu.register.common.dto.MetaDataRegisterDTO;
 import org.apache.shenyu.register.server.api.ShenyuServerRegisterPublisher;
 import org.apache.shenyu.register.server.api.ShenyuServerRegisterRepository;
 import org.apache.shenyu.spi.Join;
+import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
@@ -32,6 +35,8 @@ import java.util.Collections;
 
 /**
  * The type shenyu client controller.
+ * 这个controller什么时候被注入容器呢？
+ * @see RegisterCenterConfiguration#shenyuServerRegisterRepository(org.apache.shenyu.register.common.config.ShenyuRegisterCenterConfig, java.util.Map)
  */
 @RequestMapping("/shenyu-client")
 @Join
@@ -54,6 +59,7 @@ public class ShenyuHttpRegistryController implements ShenyuServerRegisterReposit
     @PostMapping("/springmvc-register")
     @ResponseBody
     public String registerSpringMvc(@RequestBody final MetaDataRegisterDTO metaDataRegisterDTO) {
+        System.out.println("====>>> 收到MVC注册，请求参数：" + JsonUtils.toJson(metaDataRegisterDTO));
         publish(metaDataRegisterDTO);
         return ShenyuResultMessage.SUCCESS;
     }
@@ -73,7 +79,7 @@ public class ShenyuHttpRegistryController implements ShenyuServerRegisterReposit
 
     /**
      * Register rpc string.
-     *
+     * 当dubbo服务提供者启动时，便会将元数据上报到这个接口
      * @param metaDataRegisterDTO the meta data register dto
      * @return the string
      */

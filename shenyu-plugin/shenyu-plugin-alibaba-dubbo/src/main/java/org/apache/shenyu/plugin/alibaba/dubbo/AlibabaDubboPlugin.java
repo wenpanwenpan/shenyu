@@ -74,7 +74,9 @@ public class AlibabaDubboPlugin extends AbstractShenyuPlugin {
             Object error = ShenyuResultWrap.error(ShenyuResultEnum.DUBBO_HAVE_BODY_PARAM.getCode(), ShenyuResultEnum.DUBBO_HAVE_BODY_PARAM.getMsg(), null);
             return WebFluxResultUtils.result(exchange, error);
         }
+        // RPC泛化调用
         Object result = alibabaDubboProxyService.genericInvoker(param, metaData);
+        // 将RPC调用的结果放在attributes里
         if (Objects.nonNull(result)) {
             exchange.getAttributes().put(Constants.RPC_RESULT, result);
         } else {

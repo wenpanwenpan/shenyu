@@ -52,6 +52,7 @@ public enum MatchModeEnum {
     public static String getMatchModeByCode(final int code) {
         return Arrays.stream(MatchModeEnum.values())
                 .filter(e -> e.code == code).findFirst()
+                // 找不到对应的mode则默认取and
                 .orElse(MatchModeEnum.AND)
                 .getName();
     }

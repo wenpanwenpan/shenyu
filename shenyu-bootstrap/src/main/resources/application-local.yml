@@ -40,6 +40,14 @@ spring:
 #              user-info-uri: <your user-info-uri>
 #              jwk-set-uri: <your jwk-set-uri>
 
+# dubbo相关配置（非必须，如果网关和dubbo应用在同一台服务器启动，则控制台可能报错： [DUBBO] Fail to start qos server: xx ,Address already in use）
+# https://blog.csdn.net/u012988901/article/details/84503672
+dubbo:
+  application:
+    qosEnable: true
+    qosPort: 33333
+    qosAcceptForeignIp: false
+
 management:
   health:
     defaults:
@@ -53,12 +61,14 @@ shenyu:
     dubbo :
       parameter: multi
     sync:
+       # 使用websocket作为shenyu-admin同步数据到gateway的中间件
         websocket :
              urls: ws://localhost:9095/websocket
-#        zookeeper:
-#             url: localhost:2181
-#             sessionTimeout: 5000
-#             connectionTimeout: 2000
+       # 使用 zk 作为shenyu-admin同步数据到gateway的中间件
+        zookeeper:
+             url: localhost:2181
+             sessionTimeout: 5000
+             connectionTimeout: 2000
 #        http:
 #             url : http://localhost:9095
 #        nacos:

@@ -19,7 +19,7 @@ server:
 
 spring:
   profiles:
-    active: h2
+    # active: h2
   thymeleaf:
     cache: true
     encoding: utf-8
@@ -29,7 +29,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/shenyu?useUnicode=true&characterEncoding=utf-8&useSSL=false
     username: root
-    password:
+    password: wenpanwenpan
     driver-class-name: com.mysql.jdbc.Driver
 
 mybatis:
@@ -38,8 +38,12 @@ mybatis:
 
 shenyu:
   register:
-    registerType: http #http #zookeeper #etcd #nacos #consul
-    serverLists: #localhost:2181 #http://localhost:2379 #localhost:8848
+    # 这里的 registerType 是指：1、客户端启动时上报元数据的方式(比如选择http后，ShenyuHttpRegistryController才会加载到容器，如果client配置中采用http上报，那么这里也需要使用http)，
+    # 2、好像就只有这一个作用
+    # client里的 shenyu:client:registerType 需要和这里保持一致
+    registerType: zookeeper #http #zookeeper #etcd #nacos #consul
+    # 当接收注册类型为http时这里可以不填
+    serverLists: localhost:2181 #http://localhost:2379 #localhost:8848
     props:
       sessionTimeout: 5000
       connectionTimeout: 2000
@@ -49,15 +53,20 @@ shenyu:
       nacosNameSpace: ShenyuRegisterCenter
   database:
     dialect: mysql
+    # 初始化SQL脚本的位置
     init_script: "META-INF/schema.sql"
-    init_enable: true
+    # 启动时初始化SQL脚本到数据库，第一次启动时设置为true即可
+    init_enable: false
   sync:
     websocket:
+      # 使用websocket作为shenyu-admin同步数据到gateway的中间件
       enabled: true
-#      zookeeper:
-#          url: localhost:2181
-#          sessionTimeout: 5000
-#          connectionTimeout: 2000
+      # 使用zk作为shenyu-admin同步数据到gateway的中间件
+      zookeeper:
+          url: localhost:2181
+          sessionTimeout: 5000
+          connectionTimeout: 2000
+      # 使用http作为shenyu-admin同步数据到gateway的中间件
 #      http:
 #        enabled: true
   #    nacos:
@@ -108,7 +117,7 @@ shenyu:
       - /v2/api-docs
       - /csrf
   swagger:
-    enable: true
+    enable: false
 
 logging:
   level:

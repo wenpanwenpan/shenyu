@@ -52,6 +52,7 @@ import java.util.stream.Collectors;
 @SuppressWarnings("all")
 public class AlibabaDubboServiceBeanListener implements ApplicationListener<ContextRefreshedEvent> {
 
+    /**Disruptor的事件发布器*/
     private ShenyuClientRegisterEventPublisher publisher = ShenyuClientRegisterEventPublisher.getInstance();
 
     private AtomicBoolean registered = new AtomicBoolean(false);
@@ -77,18 +78,24 @@ public class AlibabaDubboServiceBeanListener implements ApplicationListener<Cont
         this.appName = appName;
         this.host = props.getProperty("host");
         this.port = props.getProperty("port");
+        // 单线程的线程池
         executorService = Executors.newSingleThreadExecutor(new ThreadFactoryBuilder().setNameFormat("shenyu-alibaba-dubbo-client-thread-pool-%d").build());
         publisher.start(shenyuClientRegisterRepository);
     }
 
+    /**
+     * 处理每个RPC bean
+     */
     private void handler(final ServiceBean<?> serviceBean) {
         Object refProxy = serviceBean.getRef();
         Class<?> clazz = refProxy.getClass();
         if (AopUtils.isAopProxy(refProxy)) {
+            // 获取目标类的Class
             clazz = AopUtils.getTargetClass(refProxy);
         }
         Method[] methods = ReflectionUtils.getUniqueDeclaredMethods(clazz);
         for (Method method : methods) {
+            // 找到标注了 ShenyuDubboClient 注解的方法，并发布元数据事件，该事件会被 ShenyuClientMetadataExecutorSubscriber 监听到
             ShenyuDubboClient shenyuDubboClient = method.getAnnotation(ShenyuDubboClient.class);
             if (Objects.nonNull(shenyuDubboClient)) {
                 publisher.publishEvent(buildMetaDataDTO(serviceBean, shenyuDubboClient, method));
@@ -101,15 +108,21 @@ public class AlibabaDubboServiceBeanListener implements ApplicationListener<Cont
         if (StringUtils.isEmpty(appName)) {
             appName = serviceBean.getApplication().getName();
         }
+        // 比如：/dubbo（这个是自定义的）/findAll
         String path = contextPath + shenyuDubboClient.path();
+        // 描述信息
         String desc = shenyuDubboClient.desc();
+        // 接口
         String serviceName = serviceBean.getInterface();
+        // 检查下IP是否是合法的（符合正则匹配），如果不合法则获取一下本机IP
         String host = IpUtils.isCompleteHost(this.host) ? this.host : IpUtils.getHost(this.host);
         int port = StringUtils.isBlank(this.port) ? -1 : Integer.parseInt(this.port);
         String configRuleName = shenyuDubboClient.ruleName();
+        // 如果 shenyuDubboClient注解上没有指定该方法的rule，则使用该该方法的访问path作为规则名称
         String ruleName = ("".equals(configRuleName)) ? path : configRuleName;
         String methodName = method.getName();
         Class<?>[] parameterTypesClazz = method.getParameterTypes();
+        // 方法参数类型
         String parameterTypes = Arrays.stream(parameterTypesClazz).map(Class::getName)
                 .collect(Collectors.joining(","));
         return MetaDataRegisterDTO.builder()
@@ -129,12 +142,18 @@ public class AlibabaDubboServiceBeanListener implements ApplicationListener<Cont
                 .build();
     }
 
+    /**构建dubbo RPC扩展信息*/
     private String buildRpcExt(final ServiceBean<?> serviceBean) {
         DubboRpcExt builder = DubboRpcExt.builder()
+                // 服务分组
                 .group(StringUtils.isNotEmpty(serviceBean.getGroup()) ? serviceBean.getGroup() : "")
+                // 服务版本
                 .version(StringUtils.isNotEmpty(serviceBean.getVersion()) ? serviceBean.getVersion() : "")
+                // 赋值均衡策略
                 .loadbalance(StringUtils.isNotEmpty(serviceBean.getLoadbalance()) ? serviceBean.getLoadbalance() : Constants.DEFAULT_LOADBALANCE)
+                // 重试策略
                 .retries(Objects.isNull(serviceBean.getRetries()) ? Constants.DEFAULT_RETRIES : serviceBean.getRetries())
+                // 超时时间
                 .timeout(Objects.isNull(serviceBean.getTimeout()) ? Constants.DEFAULT_CONNECT_TIMEOUT : serviceBean.getTimeout())
                 .url("")
                 .build();

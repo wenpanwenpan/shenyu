@@ -32,6 +32,7 @@ public class CookieParameterData implements ParameterData {
     
     @Override
     public String builder(final String paramName, final ServerWebExchange exchange) {
+        // 从exchange里取出cookie
         List<HttpCookie> cookies = exchange.getRequest().getCookies().get(paramName);
         if (CollectionUtils.isEmpty(cookies)) {
             return "";

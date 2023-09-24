@@ -209,9 +209,12 @@ public final class BaseDataCache {
     private void ruleAccept(final RuleData data) {
         String selectorId = data.getSelectorId();
         if (RULE_MAP.containsKey(selectorId)) {
+            // 找到已经存在的规则数据list
             List<RuleData> existList = RULE_MAP.get(selectorId);
+            // 找到list中ID和待新增的rule的ID不一样的rule 列表
             final List<RuleData> resultList = existList.stream().filter(r -> !r.getId().equals(data.getId())).collect(Collectors.toList());
             resultList.add(data);
+            // 对规则排序
             final List<RuleData> collect = resultList.stream().sorted(Comparator.comparing(RuleData::getSort)).collect(Collectors.toList());
             RULE_MAP.put(selectorId, collect);
         } else {

@@ -17,6 +17,8 @@
 
 package org.apache.shenyu.admin.service.register;
 
+import org.apache.shenyu.admin.model.dto.RuleDTO;
+import org.apache.shenyu.admin.model.dto.SelectorDTO;
 import org.apache.shenyu.admin.model.entity.MetaDataDO;
 import org.apache.shenyu.admin.model.entity.SelectorDO;
 import org.apache.shenyu.admin.service.MetaDataService;
@@ -59,8 +61,11 @@ public class ShenyuClientRegisterDubboServiceImpl extends AbstractShenyuClientRe
     @Transactional(rollbackFor = Exception.class)
     public synchronized String register(final MetaDataRegisterDTO dto) {
         MetaDataDO exist = metaDataService.findByPath(dto.getPath());
+        // 更新或者插入元数据并同步给gateway
         saveOrUpdateMetaData(exist, dto);
+        // 根据元数据创建selector以及他对应的condition落库并同步给gateway
         String selectorId = handlerSelector(dto);
+        // 根据元数据创建对应的rule和ruleCondition落库并同步给gateway
         handlerRule(selectorId, dto, exist);
         return ShenyuResultMessage.SUCCESS;
     }
@@ -73,15 +78,21 @@ public class ShenyuClientRegisterDubboServiceImpl extends AbstractShenyuClientRe
     @Override
     public String handlerSelector(final MetaDataRegisterDTO metaDataDTO) {
         SelectorDO selectorDO = selectorService.findByName(metaDataDTO.getContextPath());
+        // selector已经存在了则不处理，直接返回已存在的selector的ID即可
         if (Objects.nonNull(selectorDO)) {
             return selectorDO.getId();
         }
-        return selectorService.register(registerSelector(metaDataDTO.getContextPath(), pluginService.selectIdByName(metaDataDTO.getRpcType())));
+        // 构建selector以及对应的condition（注意这里的pluginID）
+        SelectorDTO selectorDTO = registerSelector(metaDataDTO.getContextPath(), pluginService.selectIdByName(metaDataDTO.getRpcType()));
+        // selector及他对应的condition落库并推送给gateway
+        return selectorService.register(selectorDTO);
     }
 
     @Override
     public void handlerRule(final String selectorId, final MetaDataRegisterDTO metaDataDTO, final MetaDataDO exist) {
-        ruleService.register(registerRule(selectorId, metaDataDTO.getPath(), PluginEnum.DUBBO.getName(), metaDataDTO.getRuleName()),
-                metaDataDTO.getPath(), false);
+        // 构建rule和rule相关的condition
+        RuleDTO ruleDTO = registerRule(selectorId, metaDataDTO.getPath(), PluginEnum.DUBBO.getName(), metaDataDTO.getRuleName());
+        // rule和ruleCondition落库并推送给gateway
+        ruleService.register(ruleDTO, metaDataDTO.getPath(), false);
     }
 }

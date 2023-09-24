@@ -19,11 +19,15 @@ server:
 
 shenyu:
   client:
-    registerType: http #zookeeper #etcd #nacos #consul
-    serverLists: http://localhost:9095 #localhost:2181 #http://localhost:2379 #localhost:8848
+    # 这里是指client启动时向shenyu-admin注册的方式（需要和shenyu-admin里application.yml配置里的：shenyu:register:registerType 保持一致）
+    registerType: zookeeper #http #zookeeper #etcd #nacos #consul
+    serverLists: localhost:2181 #localhost:2181 #http://localhost:9095 #localhost:2181 #http://localhost:2379 #localhost:8848
     props:
-      contextPath: /http
-      appName: http
+      # shenyu-admin里的selector需要用到(作为selector的name)
+      contextPath: /http-example-contextPath
+      appName: http-example-appName
+#      contextPath: /http
+#      appName: http
       port: 8189
       nacosNameSpace: ShenyuRegisterCenter
 

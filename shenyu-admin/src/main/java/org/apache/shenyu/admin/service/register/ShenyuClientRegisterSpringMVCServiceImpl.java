@@ -19,6 +19,7 @@ package org.apache.shenyu.admin.service.register;
 
 import org.apache.commons.lang3.StringUtils;
 import org.apache.shenyu.admin.listener.DataChangedEvent;
+import org.apache.shenyu.admin.model.dto.RuleDTO;
 import org.apache.shenyu.admin.model.dto.SelectorDTO;
 import org.apache.shenyu.admin.model.entity.MetaDataDO;
 import org.apache.shenyu.admin.model.entity.SelectorDO;
@@ -70,18 +71,25 @@ public class ShenyuClientRegisterSpringMVCServiceImpl extends AbstractShenyuClie
         this.pluginService = pluginService;
     }
 
+    /**http服务提供者启动时注册数据到shenyu-admin时就会调用这个接口*/
     @Override
     @Transactional(rollbackFor = Exception.class)
     public synchronized String register(final MetaDataRegisterDTO dto) {
+        // 如果需要注册元数据(http服务提供者默认不需要注册元数据)
         if (dto.isRegisterMetaData()) {
             MetaDataDO exist = metaDataService.findByPath(dto.getPath());
+            // 元数据不存在才操作，那么存在了要更新怎么办
             if (Objects.isNull(exist)) {
                 saveOrUpdateMetaData(null, dto);
             }
         }
+        // 元数据(不是必须的) -》selector -》rule
+        // 处理这个元数据对应的selector
         String selectorId = handlerSelector(dto);
+        // 处理这个selector的rules
         handlerRule(selectorId, dto, null);
         String contextPath = dto.getContextPath();
+        // 如果说元数据里有 contextPath，则需要为该 contextPath 创建一个selector和rule
         if (StringUtils.isNotEmpty(contextPath)) {
             //register context path plugin
             registerContextPathPlugin(contextPath);
@@ -102,9 +110,11 @@ public class ShenyuClientRegisterSpringMVCServiceImpl extends AbstractShenyuClie
                 .dateCreated(currentTime)
                 .dateUpdated(currentTime)
                 .build();
+        // 元数据落库
         metaDataService.insert(metaDataDO);
-        // publish AppAuthData's event
+        // publish AppAuthData's event 发布元数据创建事件（这里其实就会同步给gateway）
         eventPublisher.publishEvent(new DataChangedEvent(ConfigGroupEnum.META_DATA, DataEventTypeEnum.CREATE,
+                // 把DO转为元数据
                 Collections.singletonList(MetaDataTransfer.INSTANCE.mapToData(metaDataDO))));
     }
 
@@ -115,26 +125,38 @@ public class ShenyuClientRegisterSpringMVCServiceImpl extends AbstractShenyuClie
 
     @Override
     public void handlerRule(final String selectorId, final MetaDataRegisterDTO dto, final MetaDataDO exist) {
-        ruleService.register(registerRule(selectorId, dto.getPath(), PluginEnum.DIVIDE.getName(), dto.getRuleName()),
-                dto.getRuleName(),
-                false);
+        // 根据元数据构建rule
+        RuleDTO ruleDTO = registerRule(selectorId, dto.getPath(), PluginEnum.DIVIDE.getName(), dto.getRuleName());
+        // 如果规则不存在则落库然后发送规则变更事件，如果规则存在则直接发送规则变更事件（同步给gateway）
+        ruleService.register(ruleDTO, dto.getRuleName(), false);
     }
 
+    /**
+     * 给 context_path插件 注册一个selector和对应的rule。什么意思呢？
+     */
     private void registerContextPathPlugin(final String contextPath) {
+        // eg: /context-path/xxxContextPath
         String name = Constants.CONTEXT_PATH_NAME_PREFIX + contextPath;
         SelectorDO selectorDO = selectorService.findByName(name);
+        // 不存在才创建
         if (Objects.isNull(selectorDO)) {
+            // 给 context_path插件 构建一个selector
             String contextPathSelectorId = registerContextPathSelector(contextPath, name);
-            ruleService.register(registerRule(contextPathSelectorId, contextPath + "/**", PluginEnum.CONTEXT_PATH.getName(), name),
-                    name,
-                    false);
+            // 构建rule
+            RuleDTO ruleDTO = registerRule(contextPathSelectorId, contextPath + "/**", PluginEnum.CONTEXT_PATH.getName(), name);
+            // 注册rule，如果规则不存在则落库然后发送规则变更事件，如果规则存在则直接发送规则变更事件（同步给gateway）
+            ruleService.register(ruleDTO, name, false);
         }
     }
 
     private String registerContextPathSelector(final String contextPath, final String name) {
+        // 构建selector数据
         SelectorDTO selectorDTO = buildDefaultSelectorDTO(name);
+        // 可以看到该selector是属于 CONTEXT_PATH 插件的
         selectorDTO.setPluginId(pluginService.selectIdByName(PluginEnum.CONTEXT_PATH.getName()));
+        // 设置selector的默认condition
         selectorDTO.setSelectorConditions(buildDefaultSelectorConditionDTO(contextPath));
+        // selector落库并推送给gateway
         return selectorService.register(selectorDTO);
     }
 }

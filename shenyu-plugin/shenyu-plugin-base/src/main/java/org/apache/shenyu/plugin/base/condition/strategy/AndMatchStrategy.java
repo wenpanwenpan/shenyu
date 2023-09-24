@@ -32,6 +32,7 @@ public class AndMatchStrategy extends AbstractMatchStrategy implements MatchStra
 
     @Override
     public Boolean match(final List<ConditionData> conditionDataList, final ServerWebExchange exchange) {
+        // and 匹配策略，每个condition都要匹配时才为true
         return conditionDataList
                 .stream()
                 .allMatch(condition -> PredicateJudgeFactory.judge(condition, buildRealData(condition, exchange)));

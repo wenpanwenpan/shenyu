@@ -66,6 +66,7 @@ public class MetaDataServiceImpl implements MetaDataService {
     public void saveOrUpdateMetaData(final MetaDataDO exist, final MetaDataRegisterDTO metaDataDTO) {
         DataEventTypeEnum eventType;
         MetaDataDO metaDataDO = MetaDataTransfer.INSTANCE.mapRegisterDTOToEntity(metaDataDTO);
+        // 不存元数据
         if (Objects.isNull(exist)) {
             Timestamp currentTime = new Timestamp(System.currentTimeMillis());
             metaDataDO.setId(UUIDUtils.getInstance().generateShortUuid());
@@ -74,6 +75,7 @@ public class MetaDataServiceImpl implements MetaDataService {
             metaDataMapper.insert(metaDataDO);
             eventType = DataEventTypeEnum.CREATE;
         } else {
+            // 存在元数据则更新元数据
             metaDataDO.setId(exist.getId());
             metaDataMapper.update(metaDataDO);
             eventType = DataEventTypeEnum.UPDATE;

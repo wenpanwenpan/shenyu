@@ -31,6 +31,7 @@ public class HeaderParameterData implements ParameterData {
     
     @Override
     public String builder(final String paramName, final ServerWebExchange exchange) {
+        // 从exchange中取出请求头，然后从请求头中根据参数名称获取数据
         List<String> headers = exchange.getRequest().getHeaders().get(paramName);
         if (CollectionUtils.isEmpty(headers)) {
             return "";
